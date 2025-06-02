@@ -1,7 +1,6 @@
 # ZIO Fire Redis
 
-[zio-fire-redis] is a Redis\* client for ZIO ecosystem that depends only on the official Redis Java Client - [
-`redis/jedis`][jedis].
+[zio-fire-redis] is a Redis\* client for the ZIO ecosystem that depends only on [Jedis] - the official Redis Java Client.
 
 ## Q&A
 
