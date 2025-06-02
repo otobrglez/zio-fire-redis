@@ -5,6 +5,9 @@
 ## Usage
 
 ```scala 3
+// Some other imports... and:
+import zio.fire.redis.Redis
+
 object HelloFireRedis extends ZIOAppDefault:
 
   def program = for
