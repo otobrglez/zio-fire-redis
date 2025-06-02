@@ -1,0 +1,20 @@
+.envrc
+
+target/
+modules/*/target
+project/project
+project/target
+
+.idea/
+.metals/
+.bsp/
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
