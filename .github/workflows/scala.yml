@@ -13,18 +13,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: docker/setup-compose-action@v1
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'zulu'
-        cache: 'sbt'
+      - uses: docker/setup-compose-action@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+          cache: 'sbt'
 
-    - uses: sbt/setup-sbt@v1
+      - uses: sbt/setup-sbt@v1
 
-    - name: Bootup Docker Compose
-      run: docker compose -f docker/docker-compose.yml up -d redis valkey
+      - name: Bootup Docker Compose
+        run: docker compose -f docker/docker-compose.yml up -d redis valkey
 
-    - name: Run tests
-      run: sbt "test;integration-tests/test"
+      - name: Run tests
+        env:
+          REDIS_URI: redis://127.0.0.1:6379/2
+          VALKEY_URI: redis://127.0.0.1:6380/2
+        run: sbt "test;integration-tests/test"
