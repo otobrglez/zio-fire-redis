@@ -1,4 +1,5 @@
 # ZIO Fire Redis
+[![Ogrodje Site Build](https://github.com/otobrglez/zio-fire-redis/actions/workflows/scala.yml/badge.svg)](https://github.com/otobrglez/zio-fire-redis/actions/workflows/scala.yml)
 
 [zio-fire-redis] is a Redis\* client for the ZIO ecosystem that depends only on [Jedis] - the official Redis Java Client.
 
