@@ -65,6 +65,7 @@ lazy val `integration-tests` = project
   .settings(
     publish / skip := true,
     Test / fork    := false,
+    libraryDependencies ++= Dependencies.logging ++ Dependencies.zio,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
 

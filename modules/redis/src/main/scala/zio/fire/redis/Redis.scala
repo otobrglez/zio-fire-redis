@@ -22,8 +22,9 @@ type RedisTask[Env, Out] = ZIO[Env, Throwable, Out]
 type RedisURI            = java.net.URI
 
 private[redis] trait DSL[-Env]:
-  def get(key: Key): RedisTask[Env, Value]
+  def get(key: Key): RedisTask[Env, Option[Value]]
   def set(key: Key, value: Value): RedisTask[Env, Value]
+  def del(key: Key): RedisTask[Env, Long]
   def mGet(keys: Key*): RedisTask[Env, List[Value]]
   def hSet(key: Key, values: (Key, Value)*): RedisTask[Env, Long]
   def hGetAll(key: Key): RedisTask[Env, Map[Key, Value]]
@@ -35,6 +36,7 @@ private[redis] trait DSL[-Env]:
   def lPop(key: Key, count: Int): RedisTask[Env, List[Value]]
   def lLen(key: Key): RedisTask[Env, Long]
   def sAdd(key: Key, members: Value*): RedisTask[Env, Long]
+  def sMembers(key: Key): RedisTask[Env, Set[Value]]
   def flushDB: RedisTask[Env, String]
   def flushDB(flushMode: FlushMode): RedisTask[Env, String]
   def hIncrBy(key: Key, field: Field, value: Long): RedisTask[Env, Long]
@@ -52,11 +54,11 @@ private[redis] trait DSL[-Env]:
   ): RedisTask[Env, List[(String, List[(StreamEntryID, Map[String, String])])]]
 
 object RedisOps:
-  given Conversion[TTL, Long]                                                      = _.toSeconds.toInt
-  given javaBinaryToScalaList: Conversion[JavaList[Binary], List[Binary]]          = _.asScala.toList
-  given javaStringToScalaList: Conversion[JavaList[Value], List[Value]]            = _.asScala.toList
-  given javaEntryToScalaList: Conversion[JavaList[StreamEntry], List[StreamEntry]] = _.asScala.toList
-
+  given Conversion[TTL, Long]                                                           = _.toSeconds.toInt
+  given javaBinaryToScalaList: Conversion[JavaList[Binary], List[Binary]]               = _.asScala.toList
+  given javaStringToScalaList: Conversion[JavaList[Value], List[Value]]                 = _.asScala.toList
+  given javaEntryToScalaList: Conversion[JavaList[StreamEntry], List[StreamEntry]]      = _.asScala.toList
+  given javaSetToScalaSet: Conversion[java.util.Set[Value], Set[Value]]                 = _.asScala.toSet
   given kvSeqToJavaMap: Conversion[Seq[(Key, Value)], java.util.Map[String, String]]    = _.toMap.asJava
   given kvJavaMapToScalaMap: Conversion[java.util.Map[String, String], Map[Key, Value]] =
     _.asScala.toMap
@@ -74,8 +76,9 @@ final private[redis] case class Redis private (private val pool: JedisPool) exte
 
   private def redisBlocking[A](r: => Jedis => A): Task[A] = wPool(redis => ZIO.attemptBlocking(r(redis)))
 
-  def get(key: Key): RedisTask[Any, Value]                               = redis(_.get(key))
+  def get(key: Key): RedisTask[Any, Option[Value]]                       = redis(_.get(key)).map(Option(_))
   def set(key: Key, value: Value): RedisTask[Any, Value]                 = redis(_.set(key, value))
+  def del(key: Key): RedisTask[Any, Long]                                = redis(_.del(key))
   def mGet(keys: Key*): RedisTask[Any, List[Value]]                      = redis(_.mget(keys*))
   def hSet(key: Key, values: (Key, Value)*): RedisTask[Any, Long]        = redis(_.hset(key, values.toSeq))
   def hGetAll(key: Key): RedisTask[Any, Map[Key, Value]]                 = redis(_.hgetAll(key))
@@ -87,6 +90,7 @@ final private[redis] case class Redis private (private val pool: JedisPool) exte
   def lPop(key: Key, count: Int): RedisTask[Any, List[Value]]            = redis(_.lpop(key, count))
   def lLen(key: Key): RedisTask[Any, Long]                               = redis(_.llen(key))
   def sAdd(key: Key, members: Value*): RedisTask[Any, Long]              = redis(_.sadd(key, members*))
+  def sMembers(key: Key): RedisTask[Any, Set[Value]]                     = redis(_.smembers(key))
   def flushDB: RedisTask[Any, String]                                    = redis(_.flushDB())
   def flushDB(flushMode: FlushMode): RedisTask[Any, String]              = redis(_.flushDB(flushMode))
   def hIncrBy(key: Key, field: Field, value: Long): RedisTask[Any, Long] = redis(_.hincrBy(key, field, value))
@@ -121,8 +125,9 @@ final private[redis] case class Redis private (private val pool: JedisPool) exte
     }
 
 object Redis extends DSL[Redis]:
-  final def get(key: Key): RedisTask[Redis, Value]                        = serviceWithZIO[Redis](_.get(key))
+  final def get(key: Key): RedisTask[Redis, Option[Value]]                = serviceWithZIO[Redis](_.get(key))
   final def set(key: Key, value: Value): RedisTask[Redis, Value]          = serviceWithZIO[Redis](_.set(key, value))
+  final def del(key: Key): RedisTask[Redis, Long]                         = serviceWithZIO[Redis](_.del(key))
   final def mGet(keys: Key*): RedisTask[Redis, List[Value]]               = serviceWithZIO[Redis](_.mGet(keys*))
   final def hSet(key: Key, values: (Key, Value)*): RedisTask[Redis, Long] = serviceWithZIO[Redis](_.hSet(key, values*))
   final def hGetAll(key: Key): RedisTask[Redis, Map[Key, Value]]          = serviceWithZIO[Redis](_.hGetAll(key))
@@ -134,6 +139,7 @@ object Redis extends DSL[Redis]:
   final def lPop(key: Key, count: Int): RedisTask[Redis, List[String]]    = serviceWithZIO[Redis](_.lPop(key, count))
   final def lLen(key: Key): RedisTask[Redis, Long]                        = serviceWithZIO[Redis](_.lLen(key))
   final def sAdd(key: Key, members: Value*): RedisTask[Redis, Long]       = serviceWithZIO[Redis](_.sAdd(key, members*))
+  final def sMembers(key: Key): RedisTask[Redis, Set[Value]]              = serviceWithZIO[Redis](_.sMembers(key))
   final def flushDB: RedisTask[Redis, Key]                                = serviceWithZIO[Redis](_.flushDB)
   final def flushDB(flushMode: FlushMode): RedisTask[Redis, Key]          = serviceWithZIO[Redis](_.flushDB(flushMode))
   final def hIncrBy(

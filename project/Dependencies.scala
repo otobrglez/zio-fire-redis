@@ -17,7 +17,11 @@ object Dependencies {
     "dev.zio" %% "zio-streams"
   ).map(_ % Versions.zio) ++ Seq(
     "com.github.sideeffffect" %% "zio-testcontainers" % Versions.zioTestContainers % Test
-  )
+  ) ++ Seq(
+    "dev.zio" %% "zio-test",
+    "dev.zio" %% "zio-test-sbt",
+    "dev.zio" %% "zio-test-magnolia"
+  ).map(_ % Versions.zio % Test)
 
   lazy val logging: Modules = Seq(
     "dev.zio" %% "zio-logging",
