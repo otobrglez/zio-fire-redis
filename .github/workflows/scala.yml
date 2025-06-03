@@ -21,6 +21,8 @@ jobs:
         distribution: 'zulu'
         cache: 'sbt'
 
+    - uses: sbt/setup-sbt@v1
+
     - name: Bootup Docker Compose
       run: docker compose -f docker/docker-compose.yml up -d redis valkey
 
