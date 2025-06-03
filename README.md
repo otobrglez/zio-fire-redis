@@ -1,11 +1,45 @@
 # ZIO Fire Redis
 
-[zio-fire-redis] is a Redis\* client for ZIO ecosystem that depends only on the official Redis Java Client - [
-`redis/jedis`][jedis].
+[zio-fire-redis] is a Redis\* client for the ZIO ecosystem that depends only on [Jedis] - the official Redis Java Client.
+
+## Usage
+
+```scala 3
+// Some other imports... and:
+import zio.fire.redis.Redis
+
+object HelloFireRedis extends ZIOAppDefault:
+
+  def program = for
+    // Basic key-value examples
+    _ <- Redis.set("name", "Oto") *> Redis.set("env", "development")
+    _ <- Redis.get("name").debug("name")
+    // Hash examples
+    _ <- Redis.hSet("hello::hash", "this" -> "is", "a" -> "hash")
+    _ <- Redis.hGet("hello::hash", "this").debug("hash value")
+    _ <- Redis.hGetAll("hello::hash").debug("hash")
+    // Set examples
+    _ <- Redis.sAdd("hello::set", "one", "two", "three", "two")
+  yield ()
+
+  def programWithService = for
+    redis <- ZIO.service[Redis]
+    _     <- redis.set("greet", "Hello World!") *> redis.get("greet").debug("greeting")
+    _     <- redis.mGet("name", "greet").debug("name and greeting")
+    // List examples
+    _     <- redis.lPush("list", "one", "two", "three") *> redis.lLen("list").debug("length")
+  yield ()
+
+  def run = (program *> programWithService)
+    .provide(
+      Scope.default,
+      Redis.liveUnscopedFromURI(new java.net.URI("redis://localhost:6379"))
+    )
+```
 
 ## Q&A
 
-### What is between ZIO Fire Redis and ZIO Redis?
+### What is the difference between ZIO Fire Redis and ZIO Redis?
 
 - [zio-fire-redis] depends **only** on [jedis] and ZIO.
 - [zio-fire-redis] supports streaming operations via [ZIO Streams][zio-streams].
