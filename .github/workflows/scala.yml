@@ -22,7 +22,7 @@ jobs:
         cache: 'sbt'
 
     - name: Bootup Docker Compose
-      run:  docker compose -f docker/docker-compose.yml -d up redis valkey
+      run: docker compose -f docker/docker-compose.yml up -d redis valkey
 
     - name: Run tests
       run: sbt "test;integration-tests/test"
