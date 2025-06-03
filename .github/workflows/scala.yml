@@ -19,6 +19,7 @@ jobs:
         java-version: '21'
         distribution: 'zulu'
         cache: 'sbt'
+    - uses: sbt/setup-sbt@v1
     - name: Run tests
       run: sbt test
     - name: Upload dependency graph
